@@ -4,21 +4,22 @@
 #ecoPCR https://git.metabarcoding.org/obitools/ecopcr/wikis/home   
 #ecoPrimers https://git.metabarcoding.org/obitools/ecoprimers/wikis/home
 #NCBI taxdump.tar.gz ftp://ftp.cbi.edu.cn/pub/biomirror/taxonomy/ncbi/
-#entrez query template document 
+#entrez query template document
+#taxize R package   https://cran.r-project.org/web/packages/taxize/index.html
 
 library(taxize)
 
 WorkingDir="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON"
 setwd(WorkingDir)
 
-projectTitle="Mysticeti"
+projectTitle="CommonMurre"
 
 ecoPrimerspath="/Users/rpk/ecoPrimers/src"
 ecoPCRpath="/Users/rpk/ecoPCR/src"
 taxdumpPath="/Users/rpk/taxdump"
-seqRequest="Mysticeti" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
-target_taxon= as.numeric(get_ids("Megaptera", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
-exclude_taxon= as.numeric(get_ids("Eschrichtius", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
+seqRequest="Alcidae" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
+target_taxon= as.numeric(get_ids("Uria aalge", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
+exclude_taxon= as.numeric(get_ids("Uria lomvia", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
 
 
 #download relevant dataset from nucleotide db, containing example taxa and counter-example taxa, from genbank
@@ -44,7 +45,7 @@ foldername=strsplit(basename(infilename), "\\.")[[1]][1]
 dir.create(foldername)  #create folder for db files and move gb file into that folder
 system(paste("mv", infilename, foldername, sep=" "))
 #copy this script into new dir, so there's a record
-thisScript="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/PrimerDesignPipeline20160725.R"
+thisScript="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/PrimerDesignPipeline20160729.R" #NOTE: this is hard-coded, because I couldn't figure out a better way to do it.  So you have to change it manually.
 system(paste0("cp ", thisScript, " ", foldername))
 #rename script
 system(paste0("mv ", foldername, "/PrimerDesignPipeline20160725.R ", foldername, "/PrimerDesignPipeline20160725_", format(Sys.time(), "%H_%M_%S"),"_", projectTitle,".R"))
@@ -54,10 +55,10 @@ system(paste("cd ", strsplit(ecoPCRpath, "/src")[[1]][1],"/tools;./ecoPCRFormat.
 
 
 #use ecoPrimers to design primers of relevant characteristics; Note odd notation of file location -- ecoPrimers wants the path and then the prefix of its files (e.g., those with extensions .sdx, .ndx, etc)
-specificity=0.87 #the proportion of the target sequence records that must be good primer matches
+specificity=0.7 #the proportion of the target sequence records that must be good primer matches
 quorum=0.7 #the proportion of the sequence records in which a strict match between the primers and their targets occurs (default: 0.7) [not obvious to me what this does if errors_allowed==0...]
-falsepositive=0 #the maximum proportion of the counterexample sequence records that fulfill the specified parameters for designing the barcodes and the primers
-primer_length=22
+falsepositive=0.1 #the maximum proportion of the counterexample sequence records that fulfill the specified parameters for designing the barcodes and the primers
+primer_length=18
 errors_allowed=2
 #note option -c considers the circularity of the genome (i.e., for mtDNA primers); I've put this in the call by default.
 ##note option -3 asks for the min number of perfect nucleotide matches on the 3prime end.  I've set this at 5 by defaut.
