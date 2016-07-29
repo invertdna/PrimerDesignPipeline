@@ -4,7 +4,7 @@ The script works by using R to call ecoPrimers and related software, asking the 
 
 The output is a csv file of candidate primers meeting user design criteria. The script calls ecoPCR at the end to see if the candidate primers (by default, the first set, but this can be changed) are likely to amplify the target taxa out of the downloaded genbank dataset. 
 
-
+Note: the script copies itself into a working directory specific to the search at hand. After running the script for the first time in a given project, it makes sense to use the copy in the project-specific working dir to further refine your search, rather than continuing to edit your master copy of the script.
 
 #dependencies: 
 #ecoPCR https://git.metabarcoding.org/obitools/ecopcr/wikis/home   
