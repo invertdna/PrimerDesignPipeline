@@ -14,15 +14,15 @@ is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) 
 WorkingDir="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON"
 setwd(WorkingDir)
 
-projectTitle="Rockfish"
+projectTitle="Mopalia"
 
 ecoPrimerspath="/Users/rpk/ecoPrimers/src"
 ecoPCRpath="/Users/rpk/ecoPCR/src"
 taxdumpPath="/Users/rpk/taxdump"
-seqRequest="Scorpaeniformes" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
-target_taxon= as.numeric(get_ids("Sebastes jordani", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
-exclude_taxon= as.numeric(get_ids("Cottidae", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
-gene="COI"
+seqRequest="Mopaliidae" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
+target_taxon= as.numeric(get_ids("Mopalia muscosa", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
+exclude_taxon= as.numeric(get_ids("Katharina tunicata", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
+gene="COI" #COI, 16S, etc
 
 #download relevant dataset from nucleotide db, containing example taxa and counter-example taxa, from genbank
 #create and execute perl script for entrez query
@@ -46,11 +46,16 @@ infilename=paste(WorkingDir, "/", outfilename, sep="")
 foldername=strsplit(basename(infilename), "\\.")[[1]][1]
 dir.create(foldername)  #create folder for db files (if necessary) and move gb file into that folder
 system(paste("mv", infilename, foldername, sep=" "))
+
+#create logfile
+sink(file=paste0(foldername, "/",format(Sys.time(), "%Y_%m_%d_%X"),"_logfile.txt"), type="output", split=T)
+
 #copy this script into new dir, so there's a record
 thisScript="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/PrimerDesignPipeline.R" #NOTE: this is hard-coded, because I couldn't figure out a better way to do it.  So you have to change it manually here.
 system(paste0("cp ", thisScript, " ", foldername))
 #rename script
 system(paste0("mv ", foldername,"/", basename(thisScript)," ", foldername, "/",strsplit(basename(thisScript),"\\.")[[1]][1],"_", format(Sys.Date(), "%Y_%m_%d"),"_", projectTitle,".R"))
+
 
 #run the formatting script
 system(paste("cd ", strsplit(ecoPCRpath, "/src")[[1]][1],"/tools;./ecoPCRFormat.py  -g -n ", WorkingDir,"/",foldername, "/", outfilename," -t ",taxdumpPath," ", WorkingDir,"/",foldername, "/", outfilename,"*", sep=""))
@@ -99,7 +104,7 @@ ecoPCRoutfile=paste0(WorkingDir,"/",foldername,"/ecopcr.out")
 #NOTE: customize this script to reflect your design needs; as written, it tries the first bunch of primer sets against the database and stores the number of genera amplified 
 primerResults$N_Genera_amplified<-NA 
 primerResults$Genera_amplified<-NA
-if(nrow(primerResults)>500) rowmax<-500 else rowmax=nrow(primerResults)
+if(nrow(primerResults)>100) rowmax<-100 else rowmax=nrow(primerResults)
 for (i in 1: rowmax){
 primer1= as.character(primerResults$primer1[i])
 primer2= as.character(primerResults$primer2[i])
@@ -112,13 +117,14 @@ if(length(unique(results$genus_name))==1) primerResults$Genera_amplified[i]<-as.
 if(is.wholenumber(i/10)){print(paste0("Primer Set ",i," of ",rowmax))} #report progress every 10th try
 }
 primerResults$Genera_amplified<-gsub(" +","", primerResults$Genera_amplified)
-primerResults<-primerResults[!is.na(primerResults$N_Genera_amplified)&primerResults$N_Genera_amplified==1,] #filter for genus-specific primers, if desired
+primerResults_singleGenus<-primerResults[!is.na(primerResults$N_Genera_amplified)&primerResults$N_Genera_amplified==1,] #filter for genus-specific primers, if desired
 
-write.csv(primerResults, paste0(foldername,"/primerResults_filtered_", primer_length,"bp_",gsub(" ","_", gene),".csv"), row.names=F)  #write out results
+write.csv(primerResults_singleGenus, paste0(foldername,"/primerResults_filtered_", primer_length,"bp_",gsub(" ","_", gene),".csv"), row.names=F)  #write out results
 
 ###optional: create fasta file of primer results
 # writeLines(paste(">",foldername, "fwd", seq(1:dim(primerResults)[1]), "\r", as.character(primerResults[seq(1:dim(primerResults)[1]),2]),"\r", ">",foldername, "rev", seq(1:dim(primerResults)[1]), "\r", as.character(primerResults[seq(1:dim(primerResults)[1]),3]),"\r",sep=""), paste(WorkingDir,"/",foldername, "/ecoPrimer_results.fasta", sep=""))
 
+sink()
 
 
 #Double-check for reasonable GC content, 3' end binding affinity, etc.
