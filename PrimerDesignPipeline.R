@@ -8,19 +8,21 @@
 #taxize R package   https://cran.r-project.org/web/packages/taxize/index.html
 
 library(taxize)
+is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol   #function from R help file ("integer"); useful for reporting progress in loops
+
 
 WorkingDir="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON"
 setwd(WorkingDir)
 
-projectTitle="CommonMurre"
+projectTitle="Rockfish"
 
 ecoPrimerspath="/Users/rpk/ecoPrimers/src"
 ecoPCRpath="/Users/rpk/ecoPCR/src"
 taxdumpPath="/Users/rpk/taxdump"
-seqRequest="Alcidae" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
-target_taxon= as.numeric(get_ids("Uria aalge", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
-exclude_taxon= as.numeric(get_ids("Uria lomvia", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
-gene="cytochrome b"
+seqRequest="Scorpaeniformes" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
+target_taxon= as.numeric(get_ids("Sebastes jordani", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
+exclude_taxon= as.numeric(get_ids("Cottidae", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
+gene="COI"
 
 #download relevant dataset from nucleotide db, containing example taxa and counter-example taxa, from genbank
 #create and execute perl script for entrez query
@@ -59,7 +61,7 @@ specificity=.95 #the proportion of the target sequence records that must be good
 quorum=0.9 #the proportion of the sequence records in which a strict match between the primers and their targets occurs (default: 0.7) [not obvious to me what this does if errors_allowed==0...]
 falsepositive=0 #the maximum proportion of the counterexample sequence records that fulfill the specified parameters for designing the barcodes and the primers
 primer_length=22
-errors_allowed=2 #note this cuts both ways: for target-group taxa and for exclusion-group taxa
+errors_allowed=2 #note this cuts both ways: for target-group taxa and for exclusion-group taxa, such that allowing 0 errors isn't actually necessarily the way to create the most stringent primers... an exclusion-group taxon could be 1bp away from your primers and you wouldn't know it.
 #note option -c considers the circularity of the genome (i.e., for mtDNA primers); I've put this in the call by default.
 ##note option -3 asks for the min number of perfect nucleotide matches on the 3prime end.  I've set this at 5 by defaut.
 
@@ -97,17 +99,17 @@ ecoPCRoutfile=paste0(WorkingDir,"/",foldername,"/ecopcr.out")
 #NOTE: customize this script to reflect your design needs; as written, it tries the first bunch of primer sets against the database and stores the number of genera amplified 
 primerResults$N_Genera_amplified<-NA 
 primerResults$Genera_amplified<-NA
-if(nrow(primerResults)>100) rowmax<-100 else rowmax=nrow(primerResults)
+if(nrow(primerResults)>500) rowmax<-500 else rowmax=nrow(primerResults)
 for (i in 1: rowmax){
 primer1= as.character(primerResults$primer1[i])
 primer2= as.character(primerResults$primer2[i])
-try(system(paste("cd ",ecoPCRpath,";./ecoPCR -d ",database," -l100 -L500 -e2 -k -c ",primer1," ",primer2," > ", ecoPCRoutfile, sep=""), intern=F))
+try(system(paste("cd ",ecoPCRpath,";./ecoPCR -d ",database," -l100 -L500 -e2 -k -c ",primer1," ",primer2," > ", ecoPCRoutfile, sep=""), ignore.stderr = T))
 #this is awkward, because ecoPCR writes a file I can't seem to store as an object in R... so I've got to write it out and then read it back in...
 	temp=readLines(ecoPCRoutfile); temp=gsub("###","<none>",temp);writeLines(temp, ecoPCRoutfile)
 	results=read.table(ecoPCRoutfile, sep="|"); names(results)=ecoPCRheader
 primerResults$N_Genera_amplified[i]<-length(unique(results$genus_name))
 if(length(unique(results$genus_name))==1) primerResults$Genera_amplified[i]<-as.character(unique(results$genus_name)[1]) else  primerResults$Genera_amplified[i]<-"Multiple"
-#print(unique(results$genus_name))
+if(is.wholenumber(i/10)){print(paste0("Primer Set ",i," of ",rowmax))} #report progress every 10th try
 }
 primerResults$Genera_amplified<-gsub(" +","", primerResults$Genera_amplified)
 primerResults<-primerResults[!is.na(primerResults$N_Genera_amplified)&primerResults$N_Genera_amplified==1,] #filter for genus-specific primers, if desired
