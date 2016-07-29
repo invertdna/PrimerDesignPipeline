@@ -112,7 +112,7 @@ if(length(unique(results$genus_name))==1) primerResults$Genera_amplified[i]<-as.
 primerResults$Genera_amplified<-gsub(" +","", primerResults$Genera_amplified)
 primerResults<-primerResults[!is.na(primerResults$N_Genera_amplified)&primerResults$N_Genera_amplified==1,] #filter for genus-specific primers, if desired
 
-write.csv(primerResults, paste0(foldername,"/primerResults_filtered_", primer_length,"bp",gsub(" ","_", gene),".csv"), row.names=F)  #write out results
+write.csv(primerResults, paste0(foldername,"/primerResults_filtered_", primer_length,"bp_",gsub(" ","_", gene),".csv"), row.names=F)  #write out results
 
 ###optional: create fasta file of primer results
 # writeLines(paste(">",foldername, "fwd", seq(1:dim(primerResults)[1]), "\r", as.character(primerResults[seq(1:dim(primerResults)[1]),2]),"\r", ">",foldername, "rev", seq(1:dim(primerResults)[1]), "\r", as.character(primerResults[seq(1:dim(primerResults)[1]),3]),"\r",sep=""), paste(WorkingDir,"/",foldername, "/ecoPrimer_results.fasta", sep=""))
