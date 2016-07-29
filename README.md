@@ -11,3 +11,4 @@ The output is a csv file of candidate primers meeting user design criteria. The 
 #ecoPrimers https://git.metabarcoding.org/obitools/ecoprimers/wikis/home
 #NCBI taxdump.tar.gz ftp://ftp.cbi.edu.cn/pub/biomirror/taxonomy/ncbi/
 #entrez query template document 
+#taxize R package   https://cran.r-project.org/web/packages/taxize/index.html
