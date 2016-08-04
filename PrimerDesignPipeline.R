@@ -14,15 +14,15 @@ is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) 
 WorkingDir="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON"
 setwd(WorkingDir)
 
-projectTitle="Humpbacks"
+projectTitle="CommonMurre"
 
 ecoPrimerspath="/Users/rpk/ecoPrimers/src"
 ecoPCRpath="/Users/rpk/ecoPCR/src"
 taxdumpPath="/Users/rpk/taxdump"
-seqRequest="Mysticeti" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
-target_taxon= as.numeric(get_ids("Megaptera novaeangliae", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
-exclude_taxon= as.numeric(get_ids("Balaenoptera", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
-gene="control region" #COI, 16S, etc
+seqRequest="Alcidae" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
+target_taxon= as.numeric(get_ids("Uria aalge", db="ncbi")$ncbi)  #what taxon are you trying to amplify?
+exclude_taxon= as.numeric(get_ids("Alle alle", db="ncbi")$ncbi)  #what taxonomic group are you trying NOT to amplify?
+gene="COI" #COI, 16S, etc
 nonTargetGene="cytochrome b"
 
 #download relevant dataset from nucleotide db, containing example taxa and counter-example taxa, from genbank
@@ -59,18 +59,18 @@ system(paste("cd ", strsplit(ecoPCRpath, "/src")[[1]][1],"/tools;./ecoPCRFormat.
 
 
 #use ecoPrimers to design primers of relevant characteristics; Note odd notation of file location -- ecoPrimers wants the path and then the prefix of its files (e.g., those with extensions .sdx, .ndx, etc)
-specificity=.70 #the proportion of the target sequence records that must be good primer matches
-quorum=0.7 #the proportion of the sequence records in which a strict match between the primers and their targets occurs (default: 0.7) [not obvious to me what this does if errors_allowed==0...]
+specificity=.90 #the proportion of the target sequence records that must be good primer matches
+quorum=0.95 #the proportion of the sequence records in which a strict match between the primers and their targets occurs (default: 0.7) [not obvious to me what this does if errors_allowed==0...]
 falsepositive=0.1 #the maximum proportion of the counterexample sequence records that fulfill the specified parameters for designing the barcodes and the primers
 primer_length=22
 errors_allowed=2 #note this cuts both ways: for target-group taxa and for exclusion-group taxa, such that allowing 0 errors isn't actually necessarily the way to create the most stringent primers... an exclusion-group taxon could be 1bp away from your primers and you wouldn't know it.
 #note option -c considers the circularity of the genome (i.e., for mtDNA primers); I've put this in the call by default.
-##note option -3 asks for the min number of perfect nucleotide matches on the 3prime end.  I've set this at 5 by defaut.
+##note option -3 asks for the min number of perfect nucleotide matches on the 3prime end.  I've set this at 6 by defaut.
 
 ecoPrimersheader=c("serial_number","primer1","primer2","Tm_primer_1","Tm_primer_1_w_mismatches","Tm_primer_2","Tm_primer_2_w_mismatches","C+G_primer_1","C+G_primer_2","good/bad","in_sequence_count","out_sequence_count","yule","in_taxa_count","out_taxa_count","coverage","Number_of_well_identified_taxa","specificity","min_amplified_length","max_amplified_length","avg_amplified_length")
 database=paste(WorkingDir,"/",foldername,"/", outfilename, sep="")
 EcoPrimersoutfile=paste(WorkingDir,"/",foldername, "/ecoPrimer_results_",format(Sys.time(), "%b_%d_%H:%M:%S"),".txt", sep="")
-system(paste("cd ", ecoPrimerspath,";./ecoPrimers -d ",database," -l 100 -L 500 -e ",errors_allowed," -r ", target_taxon," -E ", exclude_taxon," -t species -s ",specificity," -q ",quorum," -x ", falsepositive," -O ", primer_length," -c -3 5 > ", EcoPrimersoutfile, sep=""))   
+system(paste("cd ", ecoPrimerspath,";./ecoPrimers -d ",database," -l 100 -L 500 -e ",errors_allowed," -r ", target_taxon," -E ", exclude_taxon," -t species -s ",specificity," -q ",quorum," -x ", falsepositive," -O ", primer_length," -c -3 6 > ", EcoPrimersoutfile, sep=""))   
 
 #read in results, with header, for easy visual inspection  [the default output from ecoPrimers isn't easily human-readable, because it doesn't have headers, but does save the params with which the program was run, which is helpful]
 primerResults=read.table(EcoPrimersoutfile)
@@ -111,7 +111,7 @@ try(system(paste("cd ",ecoPCRpath,";./ecoPCR -d ",database," -l100 -L500 -e2 -k 
 	results=read.table(ecoPCRoutfile, sep="|"); names(results)=ecoPCRheader
 primerResults$N_Genera_amplified[i]<-length(unique(results$genus_name))
 if(length(unique(results$genus_name))==1) primerResults$Genera_amplified[i]<-as.character(unique(results$genus_name)[1]) else  primerResults$Genera_amplified[i]<-gsub(" +","",paste(unique(results$genus_name), collapse=","))
-if(is.wholenumber(i/10)){print(paste0("Primer Set ",i," of ",rowmax))} #report progress every 10th try
+if(is.wholenumber(i/10)){print(paste0("Trying Primer Set ",i," of ",rowmax))} #report progress every 10th try
 }
 primerResults$Genera_amplified<-gsub(" +","", primerResults$Genera_amplified)
 primerResults_singleGenus<-primerResults[!is.na(primerResults$N_Genera_amplified)&primerResults$N_Genera_amplified==1,] #filter for genus-specific primers, if desired
@@ -128,4 +128,3 @@ sink()
 
 #THEN, do alignment of a handful of target taxa from ecosystem of interest, and make sure primers that work in theory look like they'll work in practice.  Add ambiguities if absolutely necessary.  Then re-use ecoPCR w degenerate primers
 
-`
