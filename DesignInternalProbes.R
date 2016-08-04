@@ -3,20 +3,20 @@
 #dependencies
 #primer3 http://primer3.sourceforge.net/releases.php
 #R libraries ShortRead, msa
-
+#R function DesignProbeFunction.R
 
 library(ShortRead); library(msa)
 source("/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/DesignProbeFunction.R")  #get DesignProbe Function, modified from https://gist.github.com/al2na/8540391
-WorkingDir="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON/Humpbacks_control_region/"
+WorkingDir="/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON/Surfperch_cytochrome_b/"
 	setwd(WorkingDir)
-projectTitle="Humpbacks"
+projectTitle="Surfperch"
 #read left and right primers in, as previously designed by the pipeline
-ampPrimers<-read.csv("/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON/Humpbacks_control_region/primerResults_filtered_22bp_control_region_Aug_04_10:54:51.csv", as.is=T)
+ampPrimers<-read.csv("/Users/rpk/GoogleDrive/Kelly_Lab/Bioinformatics/PrimerDesign/MBON/Surfperch_cytochrome_b/primerResults_filtered_22bp_cytochrome_b.csv", as.is=T)
 
 #download relevant dataset as FASTA from nucleotide db, containing example taxa and counter-example taxa, from genbank
-seqRequest="Megaptera" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
-gene="control region" #COI, 16S, etc
-nonTargetGene="cytochrome b"
+seqRequest="Cymatogaster" #what taxonomic group do you want to download sequences for, that will include both ingroup and outgroup?
+gene="cytochrome b" #COI, 16S, etc
+nonTargetGene="COI"
 
 #create and execute perl script for entrez query
 query=paste0("$query = '\"", seqRequest,"\"[organism] NOT Bacteria[organism] AND mitochondrion[filter] AND (\"",gene,"\") NOT (\"", nonTargetGene,"\")';")
