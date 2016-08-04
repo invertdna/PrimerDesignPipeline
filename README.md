@@ -12,3 +12,10 @@ Note: the script copies itself into a working directory specific to the search a
 #NCBI taxdump.tar.gz ftp://ftp.cbi.edu.cn/pub/biomirror/taxonomy/ncbi/
 #entrez query template document 
 #taxize R package   https://cran.r-project.org/web/packages/taxize/index.html
+
+
+August 4, 2016
+Added DesignInternalProbes.R, which calls Primer3 to design internal probes for PCR primers such as those generated using the ecoPrimers pipeline.
+#dependencies:
+#primer3 http://primer3.sourceforge.net/releases.php
+#R libraries ShortRead, msa
